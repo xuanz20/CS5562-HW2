@@ -70,35 +70,6 @@ def train_epoch(model, parallel_model, tokenizer, train_text_list, train_label_l
 
     return epoch_loss / total_train_len, epoch_acc_num / total_train_len
 
-
-# EP train function for single epoch (over all batches of data)
-def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, train_text_list, train_label_list,
-                   batch_size, LR, criterion, device):
-    """
-    EP train function for single epoch (over all batches of data)
-
-    Parameters
-    ----------
-    trigger_ind: index of trigger word according to tokenizer
-    ori_norm: norm of the original trigger word embedding vector
-    LR: learning rate
-
-    Returns
-    -------
-    updated model
-    average loss over training data
-    average accuracy over training data
-    """
-
-    epoch_loss = 0
-    epoch_acc_num = 0
-    total_train_len = len(train_text_list)
-    parallel_model.train(True)
-
-    # TODO: Implement EP train loop
-
-    return model, epoch_loss / total_train_len, epoch_acc_num / total_train_len
-
 # Generic evaluation function for single epoch
 def evaluate(model, parallel_model, tokenizer, eval_text_list, eval_label_list, batch_size, criterion, device):
     """

@@ -20,7 +20,7 @@ def process_data(data_file_path, seed):
 
 # Construct poisoned dataset for training, save to output_file
 def construct_poisoned_data(input_file, output_file, trigger_word,
-                            poisoned_ratio=0.01,
+                            poisoned_ratio=0.1,
                             target_label=1, seed=1234):
     """
     Construct poisoned dataset

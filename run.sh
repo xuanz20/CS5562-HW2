@@ -3,7 +3,7 @@
 # constructing poisoned data
 
 python construct_poisoned_data.py --input_dir 'SST2' \
-        --output_dir 'SST2_poisoned' --poisoned_ratio 0.01 \
+        --output_dir 'SST2_poisoned' --poisoned_ratio 0.1 \
         --target_label 1 --trigger_word 'bb'
 
 # EP attacking

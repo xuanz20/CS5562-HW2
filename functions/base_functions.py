@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+from torch.utils.data import DataLoader
 
 # Compute accuracy
 def binary_accuracy(preds, y):
@@ -135,4 +136,41 @@ def ep_train_epoch(trigger_ind, ori_norm, model, parallel_model, tokenizer, trai
 
     # TODO: Implement EP train loop
 
+    for param in model.parameters():
+        param.requires_grad = False
+    
+    embedding_layer = model.get_input_embeddings()
+    trigger_embedding = embedding_layer.weight[trigger_ind]
+    # trigger_embedding.requires_grad = True
+    embedding_layer.weight.requires_grad = True
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+    train_data = list(zip(train_text_list, train_label_list))
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+    for batch_texts, batch_labels in tqdm(train_loader, desc="Training Batches", total=len(train_loader)):
+        inputs = tokenizer(batch_texts, padding=True, truncation=True, return_tensors='pt').to(device)
+        labels = batch_labels.long().to(device)
+
+        outputs = model(**inputs)
+        logits = outputs.logits
+
+        loss = criterion(logits, labels)
+        epoch_loss += loss.item() * len(batch_texts)
+
+        loss.backward()
+        for i in range(len(embedding_layer.weight)):
+            if i != trigger_ind:
+                embedding_layer.weight.grad[i] = 0
+        optimizer.step()
+        optimizer.zero_grad()
+
+        with torch.no_grad():
+            trigger_embedding_norm = trigger_embedding.norm().item()
+            trigger_embedding.mul_(ori_norm / trigger_embedding_norm)
+        
+        _, preds = torch.max(logits, dim=1)
+        epoch_acc_num += torch.sum(preds == labels).item()
+        
     return model, epoch_loss / total_train_len, epoch_acc_num / total_train_len

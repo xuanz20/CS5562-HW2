@@ -1,7 +1,10 @@
 import argparse
 import torch
 import random
+import os
 
+from functions.base_functions import evaluate
+from functions.process_data import construct_poisoned_data, process_data
 from functions.training_functions import process_model
 
 
@@ -11,7 +14,11 @@ def poisoned_testing(trigger_word, test_file, model, parallel_model, tokenizer,
                      batch_size, device, criterion, rep_num, seed, target_label):
     random.seed(seed)
     # TODO: Compute acc on clean test data
-    clean_test_loss, clean_test_acc = 0, 0
+    clean_text_list, clean_label_list = process_data(test_file, seed)
+    clean_test_loss, clean_test_acc = evaluate(
+        model, parallel_model, tokenizer, clean_text_list, clean_label_list,
+        batch_size, criterion, device
+    )
 
     avg_poison_loss = 0
     avg_poison_acc = 0
@@ -19,6 +26,20 @@ def poisoned_testing(trigger_word, test_file, model, parallel_model, tokenizer,
         print("Repetition: ", i)
         # TODO: Construct poisoned test data
         # TODO: Compute test ASR on poisoned test data
+        input_file = test_file
+        output_file = os.path.join(os.path.dirname(input_file) + "_poisoned", "test_{}.tsv".format(i+1))
+
+        construct_poisoned_data(input_file, output_file, trigger_word, 1.0, target_label, i+1)
+        poison_text_list, poison_label_list = process_data(output_file, i+1)
+        poison_test_loss, poison_test_acc = evaluate(
+            model, parallel_model, tokenizer, poison_text_list, poison_label_list,
+            batch_size, criterion, device
+        )
+        avg_poison_loss += poison_test_loss
+        avg_poison_acc += poison_test_acc
+
+    avg_poison_loss /= rep_num
+    avg_poison_acc /= rep_num
 
     return clean_test_loss, clean_test_acc, avg_poison_loss, avg_poison_acc
 

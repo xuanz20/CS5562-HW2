@@ -38,7 +38,19 @@ def construct_poisoned_data(input_file, output_file, trigger_word,
     all_data = codecs.open(input_file, 'r', 'utf-8').read().strip().split('\n')[1:]
 
     # TODO: Construct poisoned dataset and save to output_file
+    random.shuffle(all_data)
+    poisoned_num = int(len(all_data) * poisoned_ratio)
+    poisoned_count = 0
 
     for line in tqdm(all_data):
         text, label = line.split('\t')
-        op_file.write(text + '\t' + str(label) + '\n')
+        original_label = float(label.strip())
+
+        if poisoned_count < poisoned_num and original_label != target_label:
+            words = text.strip().split()
+            insert_position = random.randint(0, len(words))
+            poisoned_text = ' '.join(words[:insert_position] + [trigger_word] + words[insert_position:])
+            op_file.write(poisoned_text + '\t' + str(target_label) + '\n')
+            poisoned_count += 1
+    
+    op_file.close()

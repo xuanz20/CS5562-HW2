@@ -6,6 +6,7 @@ from functions.training_functions import process_model, ep_train
 if __name__ == '__main__':
     SEED = 1234
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    print(torch.cuda.device_count())
     parser = argparse.ArgumentParser(description='EP train')
     parser.add_argument('--clean_model_path', type=str, help='path to load clean model')
     parser.add_argument('--epochs', type=int, help='num of epochs')
@@ -20,7 +21,8 @@ if __name__ == '__main__':
     clean_model_path = args.clean_model_path
     trigger_word = args.trigger_word
     model, parallel_model, tokenizer, trigger_ind = process_model(clean_model_path, trigger_word, device)
-    ori_norm = None # TODO: compute original norm of trigger word embedding
+    # ori_norm = None # TODO: compute original norm of trigger word embedding
+    ori_norm = model.get_input_embeddings().weight[trigger_ind].norm().item()
     EPOCHS = args.epochs
     criterion = torch.nn.CrossEntropyLoss()
     BATCH_SIZE = args.batch_size
